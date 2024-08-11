@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قارئ الصور</title>
+    <script src="tesseract.min.js"></script>
+    <style>
+        @font-face {
+            font-family: 'IBM Plex Sans Arabic';
+            src: url('IBMPlexSansArabic-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'IBM Plex Sans Arabic';
+            src: url('IBMPlexSansArabic-Bold.ttf') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+        }
+
+        :root {
+            --primary-color: #6C63FF;
+            --secondary-color: #3F3D56;
+            --background-color: #F7F7FF;
+            --text-color: #2D3748;
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            flex-grow: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header svg {
+            width: 400px;
+            height: 240px;
+            margin-bottom: 0px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--secondary-color);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        #drop-area {
+            border: 2px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.436), rgb(255, 255, 255), rgba(235, 246, 255, 0.349));
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+        #drop-area.highlight {
+            background-color: rgba(108, 99, 255, 0.1);
+        }
+
+        #fileElem {
+            display: none;
+        }
+
+        .button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .button:hover {
+            background-color: #5A52CC;
+            transform: translateY(-2px);
+        }
+
+        .button svg {
+            width: 24px;
+            height: 24px;
+            margin-left: 10px;
+        }
+
+        .result-window {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .result-window-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .result-window-content {
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            transition: max-height 0.3s ease;
+        }
+
+        .result-window-content.collapsed {
+            max-height: 0;
+            padding: 0 15px;
+            overflow: hidden;
+        }
+
+        .result-window-buttons {
+            display: flex;
+            justify-content: flex-end;
+            padding: 10px;
+        }
+
+        .result-window-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            margin-left: 10px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(14, 13, 32, 0.7), rgba(106, 99, 246, 0.5), rgba(77, 76, 217, 0.3));
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            z-index: 1000;
+            backdrop-filter: blur(15px);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .overlay-content {
+            text-align: center;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #progress-text {
+            font-size: 28px;
+            margin-bottom: 15px;
+            background: linear-gradient(90deg, #63f7ff, #ffc0bc, #ffe863, #f9fbfb);
+            background-size: 300% 100%;
+            animation: textGradientShift 3s linear infinite;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            font-weight: bold;
+        }
+
+        @keyframes textGradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #progress-bar {
+            width: 200px;
+            height: 6px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        #progress {
+            width: 0%;
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.3s;
+        }
+
+        #cancel-button {
+            background-color: rgba(255, 108, 99, 0.8);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        #cancel-button:hover {
+            background-color: rgba(255, 76, 67, 0.9);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            color: #9CA3AF;
+            font-size: 14px;
+        }
+
+        .footer a {
+            color: #9CA3AF;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 2000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            animation: toastSlideUp 0.3s ease-out;
+        }
+
+        @keyframes toastSlideUp {
+            from {
+                opacity: 0;
+                transform: translate(-50%, 20px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0;
+            margin-left: 10px;
+        }
+        @keyframes gradientAnimation {
+            0% {
+                stop-color: #eaeff4;
+            }
+            50% {
+                stop-color: #6b63ff;
+            }
+            100% {
+                stop-color: #eaeff4;
+            }
+        }
+
+        #linear-gradient stop:first-child {
+            animation: gradientAnimation 5s infinite alternate;
+        }
+
+        #linear-gradient stop:last-child {
+            animation: gradientAnimation 5s infinite alternate-reverse;
+        }
+
+        #linear-gradient-2 stop:first-child {
+            animation: gradientAnimation 7s infinite alternate;
+        }
+
+        #linear-gradient-2 stop:last-child {
+            animation: gradientAnimation 7s infinite alternate-reverse;
+        }
+    
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1348.43 634.3">
+              <defs>
+                <linearGradient id="linear-gradient" x1="555.43" y1="377.82" x2="1226.18" y2="377.82" gradientUnits="userSpaceOnUse">
+                  <stop offset=".28" stop-color="#eaeff4"/>
+                  <stop offset=".95" stop-color="#6b63ff"/>
+                </linearGradient>
+                <linearGradient id="linear-gradient-2" x1="28.21" y1="315.83" x2="471.49" y2="315.83" gradientUnits="userSpaceOnUse">
+                  <stop offset=".14" stop-color="#c4dbf7"/>
+                  <stop offset=".72" stop-color="#eaeff4"/>
+                </linearGradient>
+              </defs>
+              <g opacity=".94">
+                <circle cx="817.9" cy="306.47" r="68.33" fill="#eaeff4" stroke-width="0"/>
+                <path d="M817.89,389.14c-22.04,0-42.8-8.61-58.43-24.25s-24.24-36.39-24.24-58.43c0-45.59,37.09-82.67,82.68-82.67s82.67,37.09,82.67,82.67-37.09,82.67-82.67,82.67ZM817.89,252.47c-29.77,0-54,24.22-54,54s24.22,54,54,54,54-24.22,54-54-24.22-54-54-54Z" fill="#6b63ff" stroke-width="0"/>
+                <polygon points="1179.91 612.96 974.62 341.63 807.11 612.96 1179.91 612.96" fill="#eaeff4" stroke-width="0"/>
+                <path d="M807.11,627.3c-5.2,0-9.99-2.82-12.52-7.35-2.53-4.54-2.41-10.1.32-14.52l167.51-271.33c2.49-4.03,6.79-6.57,11.52-6.79.22-.01.45-.02.67-.02,4.47,0,8.75,2.13,11.45,5.69l205.3,271.33c3.31,4.37,3.84,10.13,1.4,15.04-2.44,4.9-7.36,7.95-12.84,7.95h-372.8ZM832.82,598.62h318.27l-175.26-231.63-143,231.63Z" fill="#6b63ff" stroke-width="0"/>
+                <polygon points="936.72 612.96 769.21 427.26 601.7 612.96 936.72 612.96" fill="#eaeff4" stroke-width="0"/>
+                <path d="M623.38,627.3c-5.66,0-10.8-3.34-13.1-8.51-2.3-5.17-1.34-11.23,2.46-15.43l167.51-185.7c2.71-3.01,6.6-4.74,10.65-4.74s7.94,1.73,10.65,4.73l167.51,185.71c3.79,4.2,4.75,10.26,2.46,15.43-2.3,5.17-7.44,8.51-13.1,8.51h-335.02ZM655.63,598.62h270.53l-135.26-149.95-135.26,149.95Z" fill="#6b63ff" stroke-width="0"/>
+              </g>
+              <g>
+                <path d="M1211.84,175.05v323.44s82.09,0,82.09,0c18.31,0,33.15-14.84,33.15-33.16V59.8c0-18.31-14.84-33.16-33.16-33.15h-575.76c-18.31,0-33.15,14.84-33.15,33.15v82.09s493.67,0,493.67,0c18.31,0,33.15,14.84,33.15,33.15h0Z" fill="#eaeff4" stroke-width="0"/>
+                <g>
+                    <path d="M1211.84,512.83c-7.91,0-14.34-6.43-14.34-14.34V175.05c0-10.38-8.44-18.82-18.81-18.82h-493.67c-7.91,0-14.34-6.43-14.34-14.34V59.8c0-26.19,21.31-47.5,47.49-47.5h575.76c26.19,0,47.5,21.31,47.5,47.5v405.53c0,26.19-21.31,47.49-47.5,47.49h-82.09ZM718.18,40.99c-10.37,0-18.81,8.44-18.81,18.82v67.75h479.33c26.19,0,47.49,21.31,47.49,47.5v309.1h67.75c10.38,0,18.82-8.44,18.82-18.82V59.8c0-10.38-8.44-18.82-18.82-18.82h-575.76Z" fill="#aeaeba" stroke-width="0"/>
+                    <g opacity=".9">
+                      <path d="M1066.49,234.73c-7.91,0-14.34-6.43-14.34-14.34s6.43-14.34,14.34-14.34h145.35c7.91,0,14.34,6.43,14.34,14.34s-6.43,14.34-14.34,14.34h-145.35Z" fill="#6b63ff" stroke-width="0"/>
+                    </g>
+                    <g opacity=".9">
+                      <path d="M1102.39,311.56c-7.91,0-14.34-6.43-14.34-14.34s6.43-14.34,14.34-14.34h109.45c7.91,0,14.34,6.43,14.34,14.34s-6.43,14.34-14.34,14.34h-109.45Z" fill="#6b63ff" stroke-width="0"/>
+                    </g>
+                  </g>
+                  <path d="M602.93,628.08c-7.91,0-14.34-6.43-14.34-14.34,0-7.91,6.43-14.34,14.34-14.34h575.76c10.37,0,18.81-8.44,18.81-18.82V175.05c0-10.38-8.44-18.82-18.81-18.82h-575.76c-10.37,0-18.81,8.44-18.81,18.82v302.25c0,7.91-6.43,14.34-14.34,14.34s-14.34-6.43-14.34-14.34V175.05c0-26.19,21.31-47.5,47.49-47.5h575.76c26.19,0,47.49,21.31,47.49,47.5v405.53c0,26.19-21.31,47.5-47.49,47.5h-575.76Z" fill="url(#linear-gradient)" stroke-width="0"/>
+                </g>
+                <polygon points="471.49 612.4 28.21 612.4 28.21 19.25 272.73 19.25 471.49 194.36 471.49 612.4" fill="url(#linear-gradient-2)" stroke-width="0" opacity=".35"/>
+                <path d="M280.67,14H120.67c-37.34,0-56.01,0-70.27,7.27-12.54,6.39-22.74,16.59-29.13,29.13-7.27,14.26-7.27,32.93-7.27,70.27v386.67c0,37.34,0,56.01,7.27,70.27,6.39,12.54,16.59,22.74,29.13,29.13,14.26,7.27,32.93,7.27,70.27,7.27h357.71M280.67,14l200,200M280.67,14v146.67c0,18.67,0,28,3.63,35.13,3.2,6.27,8.29,11.37,14.57,14.57,7.13,3.63,16.46,3.63,35.13,3.63h146.67M480.67,438.43v175.52" fill="none" stroke="#6b63ff" stroke-linecap="round" stroke-linejoin="round" stroke-width="28"/>
+                <line x1="96.86" y1="425.11" x2="377.01" y2="425.11" fill="none" stroke="#6b63ff" stroke-linecap="round" stroke-linejoin="round" stroke-width="30"/>
+                <line x1="96.86" y1="319.56" x2="468.51" y2="319.56" fill="none" stroke="#6b63ff" stroke-linecap="round" stroke-linejoin="round" stroke-width="30"/>
+                <line x1="96.86" y1="214" x2="210.19" y2="214" fill="none" stroke="#6b63ff" stroke-linecap="round" stroke-linejoin="round" stroke-width="30"/>
+                <line x1="96.86" y1="530.67" x2="387.48" y2="530.67" fill="none" stroke="#6b63ff" stroke-linecap="round" stroke-linejoin="round" stroke-width="30"/>
+                <path d="M440.91,320.73h400M607.57,154.06l-166.67,166.67M607.57,487.4l-166.67-166.67" fill="none" stroke="#e07b6c" stroke-linecap="round" stroke-linejoin="round" stroke-width="40"/>
+              </svg>
+              <h1>قارئ الصور</h1>
+              <p class="subtitle">تقوم هذه الأداة باستخراج المحتوى النصي من الصور يمكنك لصق صورة من الحافظة cmd+v على ماك  , أو ويندوز ctrl+v كما يمكنك رفع صورة أو مجموعة صور لتحليلها أو اسحب وأفلت الصور بالماوس</p>
+          </div>
+          <div id="drop-area">
+              <p>قم بسحب وإفلات الصور هنا أو انقر لتحديد مكان الصورة من جهازك</p>
+              <input type="file" id="fileElem" accept="image/*" multiple>
+              <label class="button" for="fileElem">
+                  <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 684.75 514.53" width="24" height="24">
+                      <circle cx="269.46" cy="185.92" r="68.33" fill="#c4dbf7" stroke-width="0"/>
+                      <path d="M179.78,185.91c0-49.45,40.23-89.67,89.67-89.67,49.45,0,89.67,40.23,89.67,89.67,0,49.45-40.23,89.67-89.67,89.67-49.45,0-89.68-40.23-89.67-89.67ZM222.46,185.91c0,25.91,21.08,47,47,47,25.91,0,47-21.08,47-47,0-25.91-21.08-47-47-47-25.92,0-47,21.08-47,47Z" fill="#fff" stroke-width="0"/>
+                      <polygon points="631.48 492.41 426.19 221.08 258.68 492.41 631.48 492.41" fill="#c4dbf7" opacity=".55" stroke-width="0"/>
+                      <path d="M240.04,502.8c-3.77-6.76-3.58-15.02.48-21.61l167.51-271.33c3.7-5.99,10.11-9.77,17.15-10.1,7.01-.33,13.78,2.82,18.03,8.44l205.3,271.33c4.89,6.46,5.69,15.13,2.09,22.38-3.61,7.25-11.01,11.84-19.11,11.84h-372.8c-7.74,0-14.87-4.19-18.64-10.95ZM427.97,258.81l-131.04,212.26h291.64s-160.6-212.26-160.6-212.26Z" fill="#fff" opacity=".68" stroke-width="0"/>
+                      <polygon points="388.29 492.41 220.78 306.7 53.27 492.41 388.29 492.41" fill="#c4dbf7" stroke-width="0"/>
+                      <g>
+                          <path d="M33.77,501.07c-3.42-7.7-1.99-16.7,3.65-22.96l167.51-185.7c4.05-4.49,9.81-7.05,15.85-7.05,6.04,0,11.8,2.56,15.85,7.05l167.51,185.7c5.65,6.26,7.08,15.26,3.65,22.96-3.43,7.7-11.07,12.67-19.5,12.67H53.27c-8.43,0-16.07-4.96-19.5-12.67ZM220.78,338.56l-119.52,132.5h239.04s-119.52-132.5-119.52-132.5Z" fill="#fff" stroke-width="0"/>
+                          <path d="M33.15,493.19c0-11.79,9.56-21.34,21.34-21.34h575.76c6.52,0,11.81-5.3,11.81-11.82V54.5c0-6.51-5.3-11.82-11.81-11.82H54.5c-6.52,0-11.81,5.3-11.81,11.82v302.25c0,11.79-9.56,21.34-21.34,21.34-11.78,0-21.34-9.55-21.34-21.34V54.5C0,24.45,24.45,0,54.49,0h575.76c30.05,0,54.49,24.45,54.49,54.5v405.53c0,30.05-24.45,54.5-54.49,54.5H54.49c-11.78,0-21.34-9.55-21.34-21.34Z" fill="#fff" stroke-width="0"/>
+                      </g>
+                      <g opacity=".86">
+                          <path d="M496.72,99.84c0-11.79,9.56-21.34,21.34-21.34h145.35c11.78,0,21.34,9.55,21.34,21.34,0,11.79-9.56,21.34-21.34,21.34h-145.35c-11.79,0-21.34-9.55-21.34-21.34Z" fill="#fff" stroke-width="0"/>
+                          <path d="M532.62,176.66c0-11.79,9.56-21.34,21.34-21.34h109.45c11.78,0,21.34,9.55,21.34,21.34,0,11.79-9.56,21.34-21.34,21.34h-109.45c-11.78,0-21.34-9.55-21.34-21.34Z" fill="#fff" stroke-width="0"/>
+                      </g>
+                  </svg>
+                  اختيار ملفات
+              </label>
+          </div>
+          <div id="results-container"></div>
+      </div>
+      <div class="footer">
+          <a href="https://www.behance.net/yosfgfx" target="_blank">تصميم يوسف حُميد (Yosfgfx)</a>
+      </div>
+      <div id="progress-overlay" class="overlay">
+          <div class="overlay-content">
+              <div id="progress-text">جاري التحليل...</div>
+              <div id="progress-bar">
+                  <div id="progress"></div>
+              </div>
+              <button id="cancel-button" onclick="cancelOperation()">إلغاء</button>
+          </div>
+      </div>
+      <div id="toast" class="toast">تم النسخ إلى الحافظة</div>
+      <script>
+        async function processImage(file) {
+            showProgressOverlay(); 
+
+            worker = Tesseract.createWorker({
+                logger: m => {
+                    if (m.status === 'recognizing text') {
+                        progressBar.style.width = `${m.progress * 100}%`;
+                    }
+                }
+            });
+
+            await worker.load();
+            await worker.loadLanguage('ara');
+            await worker.initialize('ara');
+
+            const { data: { text } } = await worker.recognize(file);
+            
+            displayResult(file.name, text);
+
+            await worker.terminate();
+            worker = null;
+
+            hideProgressOverlay(); 
+        }
+          let dropArea = document.getElementById('drop-area');
+          let fileElem = document.getElementById('fileElem');
+          let resultsContainer = document.getElementById('results-container');
+          let progressOverlay = document.getElementById('progress-overlay');
+          let progressBar = document.getElementById('progress');
+          let toast = document.getElementById('toast');
+          let worker = null;
+  
+          ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+              dropArea.addEventListener(eventName, preventDefaults, false);
+          });
+          document.addEventListener('paste', function(event) {
+            const items = event.clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const blob = items[i].getAsFile();
+                    processImage(blob);
+                    break; 
+                }
+            }
+        });
+        function animateGradients() {
+            const gradients = document.querySelectorAll('linearGradient');
+            gradients.forEach(gradient => {
+                const stops = gradient.querySelectorAll('stop');
+                stops.forEach(stop => {
+                    const randomDuration = 5 + Math.random() * 5; // مدة عشوائية بين 5 و 10 ثوانٍ
+                    stop.style.animation = `gradientAnimation ${randomDuration}s infinite alternate`;
+                });
+            });
+        }
+          function preventDefaults(e) {
+              e.preventDefault();
+              e.stopPropagation();
+          }
+  
+          ['dragenter', 'dragover'].forEach(eventName => {
+              dropArea.addEventListener(eventName, highlight, false);
+          });
+  
+          ['dragleave', 'drop'].forEach(eventName => {
+              dropArea.addEventListener(eventName, unhighlight, false);
+          });
+  
+          function highlight(e) {
+              dropArea.classList.add('highlight');
+          }
+  
+          function unhighlight(e) {
+              dropArea.classList.remove('highlight');
+          }
+  
+          dropArea.addEventListener('drop', handleDrop, false);
+          fileElem.addEventListener('change', handleFiles, false);
+  
+          function handleDrop(e) {
+              let dt = e.dataTransfer;
+              let files = dt.files;
+              handleFiles({ target: { files: files } });
+          }
+  
+          function handleFiles(e) {
+              let files = e.target.files;
+              if (files.length > 0) {
+                  processFiles(files);
+              }
+          }
+  
+          async function processFiles(files) {
+              showProgressOverlay();
+              
+              for (let file of files) {
+                  if (file.type.startsWith('image/')) {
+                      await processImage(file);
+                  }
+              }
+              
+              hideProgressOverlay();
+          }
+  
+          async function processImage(file) {
+              worker = Tesseract.createWorker({
+                  logger: m => {
+                      if (m.status === 'recognizing text') {
+                          progressBar.style.width = `${m.progress * 100}%`;
+                      }
+                  }
+              });
+  
+              await worker.load();
+              await worker.loadLanguage('ara');
+              await worker.initialize('ara');
+  
+              const { data: { text } } = await worker.recognize(file);
+              
+              displayResult(file.name, text);
+  
+              await worker.terminate();
+              worker = null;
+          }
+  
+          function displayResult(fileName, text) {
+            let resultWindow = document.createElement('div');
+            resultWindow.className = 'result-window';
+            resultWindow.innerHTML = `
+                <div class="result-window-header">
+                    <span>${fileName}</span>
+                    <div>
+                        <button class="close-button" onclick="toggleResultWindow(this)">▼</button>
+                        <button class="close-button" onclick="closeResultWindow(this)">×</button>
+                    </div>
+                </div>
+                <div class="result-window-content">
+                    <div>${text}</div>
+                    <div class="result-window-buttons">
+                        <button class="result-window-button" onclick="saveAsTxt('${fileName}', this)">حفظ كملف نصي</button>
+                        <button class="result-window-button" onclick="copyToClipboard(this)">نسخ إلى الحافظة</button>
+                    </div>
+                </div>
+            `;
+            resultsContainer.insertBefore(resultWindow, resultsContainer.firstChild);
+        }
+
+        function toggleResultWindow(button) {
+            let content = button.closest('.result-window').querySelector('.result-window-content');
+            content.classList.toggle('collapsed');
+            button.textContent = content.classList.contains('collapsed') ? '▼' : '▲';
+        }
+
+        function closeResultWindow(button) {
+            button.closest('.result-window').remove();
+        }
+
+        function saveAsTxt(fileName, button) {
+            let text = button.closest('.result-window-content').querySelector('div').innerText;
+            let blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            let a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = fileName.replace(/\.[^/.]+$/, "") + '.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function copyToClipboard(button) {
+            let text = button.closest('.result-window-content').querySelector('div').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast();
+            });
+        }
+
+        function showProgressOverlay() {
+            progressOverlay.style.display = 'flex';
+            progressOverlay.querySelector('.overlay-content').style.animation = 'slideUp 0.3s ease-out';
+        }
+
+        function hideProgressOverlay() {
+            let overlayContent = progressOverlay.querySelector('.overlay-content');
+            overlayContent.style.animation = 'slideDown 0.3s ease-out';
+            setTimeout(() => {
+                progressOverlay.style.display = 'none';
+                overlayContent.style.animation = '';
+            }, 300);
+        }
+
+        function showToast() {
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function cancelOperation() {
+            if (worker) {
+                worker.terminate();
+                worker = null;
+            }
+            hideProgressOverlay();
+        }
+
+        document.addEventListener('paste', function(event) {
+    const items = event.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+            const blob = items[i].getAsFile();
+            showProgressOverlay(); // إظهار نافذة التقدم قبل بدء المعالجة
+            processImage(blob).then(() => {
+                hideProgressOverlay(); // إخفاء نافذة التقدم بعد انتهاء المعالجة
+            }).catch((error) => {
+                console.error('Error processing pasted image:', error);
+                hideProgressOverlay(); // إخفاء نافذة التقدم في حالة حدوث خطأ
+            });
+            break; // معالجة صورة واحدة فقط في كل مرة
+        }
+    }
+});
+
+async function processImage(file) {
+    worker = Tesseract.createWorker({
+        logger: m => {
+            if (m.status === 'recognizing text') {
+                updateProgress(m.progress);
+            }
+        }
+    });
+
+    await worker.load();
+    await worker.loadLanguage('ara');
+    await worker.initialize('ara');
+
+    const { data: { text } } = await worker.recognize(file);
+    
+    displayResult(file.name || 'Pasted Image', text);
+
+    await worker.terminate();
+    worker = null;
+}
+
+function updateProgress(progress) {
+    progressBar.style.width = `${progress * 100}%`;
+    document.getElementById('progress-text').textContent = `جاري التحليل... ${Math.round(progress * 100)}%`;
+}
+
+function showProgressOverlay() {
+    progressOverlay.style.display = 'flex';
+    progressBar.style.width = '0%';
+    document.getElementById('progress-text').textContent = 'جاري التحليل...';
+    progressOverlay.querySelector('.overlay-content').style.animation = 'slideUp 0.3s ease-out';
+}
+
+function hideProgressOverlay() {
+    let overlayContent = progressOverlay.querySelector('.overlay-content');
+    overlayContent.style.animation = 'slideDown 0.3s ease-out';
+    setTimeout(() => {
+        progressOverlay.style.display = 'none';
+        overlayContent.style.animation = '';
+    }, 300);
+}
+        // استدعاء الدالة عند تحميل الصفحة
+        window.addEventListener('load', animateGradients);
+    </script>
+</body>
+</html>

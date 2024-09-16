@@ -14,7 +14,6 @@
     <!--
     <script src="tesseract.min.js"></script>
     -->
-    <script src="https://unpkg.com/tesseract.js@5.0.0/dist/tesseract.min.js"></script>
     <style>
         @font-face {
             font-family: 'IBM Plex Sans Arabic';
@@ -466,254 +465,202 @@
           </div>
       </div>
       <div id="toast" class="toast">تم النسخ إلى الحافظة</div>
-      <script>
-        async function processImage(file) {
-            showProgressOverlay(); 
+      <!-- Include Tesseract.js -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js"></script>
 
-            worker = Tesseract.createWorker({
-                logger: m => {
-                    if (m.status === 'recognizing text') {
-                        progressBar.style.width = `${m.progress * 100}%`;
-                    }
-                }
-            });
+    <script>
+        // Initialize global variables
+const dropArea = document.getElementById('drop-area');
+const fileElem = document.getElementById('fileElem');
+const resultsContainer = document.getElementById('results-container');
+const progressOverlay = document.getElementById('progress-overlay');
+const progressBar = document.getElementById('progress');
+const toast = document.getElementById('toast');
+let worker = null;
 
-            await worker.load();
-            await worker.loadLanguage('ara');
-            await worker.initialize('ara');
+// Prevent default behaviors for drag-and-drop
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, preventDefaults, false);
+    document.body.addEventListener(eventName, preventDefaults, false);
+});
 
-            const { data: { text } } = await worker.recognize(file);
-            
-            displayResult(file.name, text);
+// Highlight drop area on drag events
+['dragenter', 'dragover'].forEach(eventName => {
+    dropArea.addEventListener(eventName, highlight, false);
+});
 
-            await worker.terminate();
-            worker = null;
+['dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, unhighlight, false);
+});
 
-            hideProgressOverlay(); 
-        }
-          let dropArea = document.getElementById('drop-area');
-          let fileElem = document.getElementById('fileElem');
-          let resultsContainer = document.getElementById('results-container');
-          let progressOverlay = document.getElementById('progress-overlay');
-          let progressBar = document.getElementById('progress');
-          let toast = document.getElementById('toast');
-          let worker = null;
-  
-          ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-              dropArea.addEventListener(eventName, preventDefaults, false);
-          });
-          document.addEventListener('paste', function(event) {
-            const items = event.clipboardData.items;
-            for (let i = 0; i < items.length; i++) {
-                if (items[i].type.indexOf('image') !== -1) {
-                    const blob = items[i].getAsFile();
-                    processImage(blob);
-                    break; 
-                }
-            }
-        });
-        function animateGradients() {
-            const gradients = document.querySelectorAll('linearGradient');
-            gradients.forEach(gradient => {
-                const stops = gradient.querySelectorAll('stop');
-                stops.forEach(stop => {
-                    const randomDuration = 5 + Math.random() * 5; // مدة عشوائية بين 5 و 10 ثوانٍ
-                    stop.style.animation = `gradientAnimation ${randomDuration}s infinite alternate`;
-                });
-            });
-        }
-          function preventDefaults(e) {
-              e.preventDefault();
-              e.stopPropagation();
-          }
-  
-          ['dragenter', 'dragover'].forEach(eventName => {
-              dropArea.addEventListener(eventName, highlight, false);
-          });
-  
-          ['dragleave', 'drop'].forEach(eventName => {
-              dropArea.addEventListener(eventName, unhighlight, false);
-          });
-  
-          function highlight(e) {
-              dropArea.classList.add('highlight');
-          }
-  
-          function unhighlight(e) {
-              dropArea.classList.remove('highlight');
-          }
-  
-          dropArea.addEventListener('drop', handleDrop, false);
-          fileElem.addEventListener('change', handleFiles, false);
-  
-          function handleDrop(e) {
-              let dt = e.dataTransfer;
-              let files = dt.files;
-              handleFiles({ target: { files: files } });
-          }
-  
-          function handleFiles(e) {
-              let files = e.target.files;
-              if (files.length > 0) {
-                  processFiles(files);
-              }
-          }
-  
-          async function processFiles(files) {
-              showProgressOverlay();
-              
-              for (let file of files) {
-                  if (file.type.startsWith('image/')) {
-                      await processImage(file);
-                  }
-              }
-              
-              hideProgressOverlay();
-          }
-  
-          async function processImage(file) {
-              worker = Tesseract.createWorker({
-                  logger: m => {
-                      if (m.status === 'recognizing text') {
-                          progressBar.style.width = `${m.progress * 100}%`;
-                      }
-                  }
-              });
-  
-              await worker.load();
-              await worker.loadLanguage('ara');
-              await worker.initialize('ara');
-  
-              const { data: { text } } = await worker.recognize(file);
-              
-              displayResult(file.name, text);
-  
-              await worker.terminate();
-              worker = null;
-          }
-  
-          function displayResult(fileName, text) {
-            let resultWindow = document.createElement('div');
-            resultWindow.className = 'result-window';
-            resultWindow.innerHTML = `
-                <div class="result-window-header">
-                    <span>${fileName}</span>
-                    <div>
-                        <button class="close-button" onclick="toggleResultWindow(this)">▼</button>
-                        <button class="close-button" onclick="closeResultWindow(this)">×</button>
-                    </div>
-                </div>
-                <div class="result-window-content">
-                    <div>${text}</div>
-                    <div class="result-window-buttons">
-                        <button class="result-window-button" onclick="saveAsTxt('${fileName}', this)">حفظ كملف نصي</button>
-                        <button class="result-window-button" onclick="copyToClipboard(this)">نسخ إلى الحافظة</button>
-                    </div>
-                </div>
-            `;
-            resultsContainer.insertBefore(resultWindow, resultsContainer.firstChild);
-        }
+// Handle paste events
+document.addEventListener('paste', handlePaste, false);
 
-        function toggleResultWindow(button) {
-            let content = button.closest('.result-window').querySelector('.result-window-content');
-            content.classList.toggle('collapsed');
-            button.textContent = content.classList.contains('collapsed') ? '▼' : '▲';
-        }
+// Handle file drop
+dropArea.addEventListener('drop', handleDrop, false);
+fileElem.addEventListener('change', handleFiles, false);
 
-        function closeResultWindow(button) {
-            button.closest('.result-window').remove();
-        }
+// Prevent default behavior
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
 
-        function saveAsTxt(fileName, button) {
-            let text = button.closest('.result-window-content').querySelector('div').innerText;
-            let blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-            let a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = fileName.replace(/\.[^/.]+$/, "") + '.txt';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
+// Highlight drop area
+function highlight(e) {
+    dropArea.classList.add('highlight');
+}
 
-        function copyToClipboard(button) {
-            let text = button.closest('.result-window-content').querySelector('div').innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                showToast();
-            });
-        }
+// Unhighlight drop area
+function unhighlight(e) {
+    dropArea.classList.remove('highlight');
+}
 
-        function showProgressOverlay() {
-            progressOverlay.style.display = 'flex';
-            progressOverlay.querySelector('.overlay-content').style.animation = 'slideUp 0.3s ease-out';
-        }
+// Handle dropped files
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    handleFiles({ target: { files: files } });
+}
 
-        function hideProgressOverlay() {
-            let overlayContent = progressOverlay.querySelector('.overlay-content');
-            overlayContent.style.animation = 'slideDown 0.3s ease-out';
-            setTimeout(() => {
-                progressOverlay.style.display = 'none';
-                overlayContent.style.animation = '';
-            }, 300);
-        }
+// Handle selected files
+function handleFiles(e) {
+    const files = e.target.files;
+    if (files.length > 0) {
+        processFiles(files);
+    }
+}
 
-        function showToast() {
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
-
-        function cancelOperation() {
-            if (worker) {
-                worker.terminate();
-                worker = null;
-            }
-            hideProgressOverlay();
-        }
-
-        document.addEventListener('paste', function(event) {
-    const items = event.clipboardData.items;
+// Handle pasted images
+function handlePaste(e) {
+    const items = e.clipboardData.items;
     for (let i = 0; i < items.length; i++) {
         if (items[i].type.indexOf('image') !== -1) {
             const blob = items[i].getAsFile();
-            showProgressOverlay(); // إظهار نافذة التقدم قبل بدء المعالجة
+            showProgressOverlay(); // Show progress before processing
             processImage(blob).then(() => {
-                hideProgressOverlay(); // إخفاء نافذة التقدم بعد انتهاء المعالجة
+                hideProgressOverlay(); // Hide progress after processing
             }).catch((error) => {
                 console.error('Error processing pasted image:', error);
-                hideProgressOverlay(); // إخفاء نافذة التقدم في حالة حدوث خطأ
+                alert('حدث خطأ أثناء معالجة الصورة. يرجى المحاولة مرة أخرى.');
+                hideProgressOverlay(); // Hide progress on error
             });
-            break; // معالجة صورة واحدة فقط في كل مرة
+            break; // Process only one image at a time
         }
     }
-});
+}
 
-async function processImage(file) {
-    worker = Tesseract.createWorker({
-        logger: m => {
-            if (m.status === 'recognizing text') {
-                updateProgress(m.progress);
-            }
+// Process multiple files
+async function processFiles(files) {
+    showProgressOverlay();
+    for (let file of files) {
+        if (file.type.startsWith('image/')) {
+            await processImage(file);
         }
+    }
+    hideProgressOverlay();
+}
+
+// Process a single image file
+async function processImage(file) {
+    try {
+        // If a worker is already running, terminate it
+        if (worker) {
+            await worker.terminate();
+            worker = null;
+        }
+
+        // Create a new worker
+        worker = Tesseract.createWorker({
+            logger: m => {
+                if (m.status === 'recognizing text') {
+                    updateProgress(m.progress);
+                }
+            }
+        });
+
+        // Initialize the worker
+        await worker.load(); // Load the WASM and language data
+        await worker.loadLanguage('ara'); // Load Arabic language
+        await worker.initialize('ara'); // Initialize with Arabic
+
+        // Recognize text from the image
+        const { data: { text } } = await worker.recognize(file);
+
+        // Display the result
+        displayResult(file.name || 'Pasted Image', text);
+    } catch (error) {
+        console.error('Error processing image:', error);
+        alert('حدث خطأ أثناء معالجة الصورة. يرجى المحاولة مرة أخرى.');
+    } finally {
+        // Terminate the worker
+        if (worker) {
+            await worker.terminate();
+            worker = null;
+        }
+        hideProgressOverlay();
+    }
+}
+
+// Display OCR result
+function displayResult(fileName, text) {
+    const resultWindow = document.createElement('div');
+    resultWindow.className = 'result-window';
+    resultWindow.innerHTML = `
+        <div class="result-window-header">
+            <span>${fileName}</span>
+            <div>
+                <button class="close-button" onclick="toggleResultWindow(this)">▼</button>
+                <button class="close-button" onclick="closeResultWindow(this)">×</button>
+            </div>
+        </div>
+        <div class="result-window-content">
+            <div>${text}</div>
+            <div class="result-window-buttons">
+                <button class="result-window-button" onclick="saveAsTxt('${fileName}', this)">حفظ كملف نصي</button>
+                <button class="result-window-button" onclick="copyToClipboard(this)">نسخ إلى الحافظة</button>
+            </div>
+        </div>
+    `;
+    resultsContainer.insertBefore(resultWindow, resultsContainer.firstChild);
+}
+
+// Toggle result window visibility
+function toggleResultWindow(button) {
+    const content = button.closest('.result-window').querySelector('.result-window-content');
+    content.classList.toggle('collapsed');
+    button.textContent = content.classList.contains('collapsed') ? '▼' : '▲';
+}
+
+// Close result window
+function closeResultWindow(button) {
+    button.closest('.result-window').remove();
+}
+
+// Save OCR result as text file
+function saveAsTxt(fileName, button) {
+    const text = button.closest('.result-window-content').querySelector('div').innerText;
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fileName.replace(/\.[^/.]+$/, "") + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+// Copy OCR result to clipboard
+function copyToClipboard(button) {
+    const text = button.closest('.result-window-content').querySelector('div').innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('تم نسخ النص إلى الحافظة!');
+    }).catch(err => {
+        console.error('Failed to copy text: ', err);
+        showToast('فشل في نسخ النص.');
     });
-
-    await worker.load();
-    await worker.loadLanguage('ara');
-    await worker.initialize('ara');
-
-    const { data: { text } } = await worker.recognize(file);
-    
-    displayResult(file.name || 'Pasted Image', text);
-
-    await worker.terminate();
-    worker = null;
 }
 
-function updateProgress(progress) {
-    progressBar.style.width = `${progress * 100}%`;
-    document.getElementById('progress-text').textContent = `جاري التحليل... ${Math.round(progress * 100)}%`;
-}
-
+// Show progress overlay
 function showProgressOverlay() {
     progressOverlay.style.display = 'flex';
     progressBar.style.width = '0%';
@@ -721,16 +668,66 @@ function showProgressOverlay() {
     progressOverlay.querySelector('.overlay-content').style.animation = 'slideUp 0.3s ease-out';
 }
 
+// Hide progress overlay
 function hideProgressOverlay() {
-    let overlayContent = progressOverlay.querySelector('.overlay-content');
+    const overlayContent = progressOverlay.querySelector('.overlay-content');
     overlayContent.style.animation = 'slideDown 0.3s ease-out';
     setTimeout(() => {
         progressOverlay.style.display = 'none';
         overlayContent.style.animation = '';
     }, 300);
 }
-        // استدعاء الدالة عند تحميل الصفحة
-        window.addEventListener('load', animateGradients);
+
+// Update progress bar
+function updateProgress(progress) {
+    progressBar.style.width = `${progress * 100}%`;
+    document.getElementById('progress-text').textContent = `جاري التحليل... ${Math.round(progress * 100)}%`;
+}
+
+// Show toast notification with custom message
+function showToast(message = 'تم النسخ إلى الحافظة!') {
+    toast.textContent = message; // Set the message
+    toast.classList.add('show');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+// Cancel OCR Operation
+async function cancelOperation() {
+    if (worker) {
+        try {
+            await worker.terminate(); // Terminate the worker
+            worker = null; // Reset the worker reference
+            console.log('OCR operation canceled.');
+            showToast('تم إلغاء عملية التحليل.');
+        } catch (error) {
+            console.error('Error terminating worker:', error);
+            showToast('حدث خطأ أثناء إلغاء العملية.');
+        }
+    } else {
+        console.log('No active OCR operation to cancel.');
+        showToast('لا توجد عملية تحليل نشطة للإلغاء.');
+    }
+    
+    // Hide the progress overlay
+    hideProgressOverlay();
+}
+
+// Animate gradients (if applicable)
+function animateGradients() {
+    const gradients = document.querySelectorAll('linearGradient');
+    gradients.forEach(gradient => {
+        const stops = gradient.querySelectorAll('stop');
+        stops.forEach(stop => {
+            const randomDuration = 5 + Math.random() * 5; // Random duration between 5 and 10 seconds
+            stop.style.animation = `gradientAnimation ${randomDuration}s infinite alternate`;
+        });
+    });
+}
+
+// Call animateGradients on page load
+window.addEventListener('load', animateGradients);
     </script>
 </body>
 </html>

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>قارئ الصور</title>
+    <!-- Favicon and Icons -->
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
@@ -11,9 +12,11 @@
     <link rel="mask-icon" href="safari-pinned-tab.svg" color="#5bbad5">
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="theme-color" content="#ffffff">
-    <!--
-    <script src="tesseract.min.js"></script>
-    -->
+    
+    <!-- Include Tesseract.js 5.0.5 via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js"></script>
+    
+    <!-- Styles -->
     <style>
         @font-face {
             font-family: 'IBM Plex Sans Arabic';
@@ -86,6 +89,7 @@
             text-align: center;
             transition: all 0.3s ease;
             margin-bottom: 30px;
+            position: relative;
         }
         #drop-area.highlight {
             background-color: rgba(108, 99, 255, 0.1);
@@ -168,6 +172,11 @@
             border-radius: var(--border-radius);
             cursor: pointer;
             font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .result-window-button:hover {
+            background-color: #45a049;
         }
 
         .overlay {
@@ -189,6 +198,10 @@
         .overlay-content {
             text-align: center;
             animation: slideUp 0.3s ease-out;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            width: 300px;
         }
 
         @keyframes slideUp {
@@ -239,8 +252,8 @@
         }
 
         #progress-bar {
-            width: 200px;
-            height: 6px;
+            width: 100%;
+            height: 10px;
             background-color: rgba(255, 255, 255, 0.3);
             border-radius: 4px;
             overflow: hidden;
@@ -262,7 +275,7 @@
             border-radius: var(--border-radius);
             cursor: pointer;
             font-size: 14px;
-            transition: all 0.3s ease;
+            transition: background-color 0.3s ease;
         }
 
         #cancel-button:hover {
@@ -301,7 +314,7 @@
 
         .toast.show {
             opacity: 1;
-            animation: toastSlideUp 0.3s ease-out;
+            animation: toastSlideUp 0.3s ease-out forwards;
         }
 
         @keyframes toastSlideUp {
@@ -324,16 +337,11 @@
             padding: 0;
             margin-left: 10px;
         }
+
         @keyframes gradientAnimation {
-            0% {
-                stop-color: #eaeff4;
-            }
-            50% {
-                stop-color: #6b63ff;
-            }
-            100% {
-                stop-color: #eaeff4;
-            }
+            0% { stop-color: #eaeff4; }
+            50% { stop-color: #6b63ff; }
+            100% { stop-color: #eaeff4; }
         }
 
         #linear-gradient stop:first-child {
@@ -352,40 +360,33 @@
             animation: gradientAnimation 7s infinite alternate-reverse;
         }
 
-/*         Arrow animation */
-        /* styles.css */
+        /* Arrow animation */
+        #L_arrow {
+            position: relative;
+            transform: translateX(0);
+            animation: moveLeftRightAdvanced 3s infinite;
+        }
 
-/* Style the L_arrow element */
-/* Advanced styles.css */
-
-#L_arrow {
-/*   display: inline-block; */
-  position: relative;
-/*   font-size: 24px; */
-  transform: translateX(0);
-  animation: moveLeftRightAdvanced 3s infinite;
-}
-
-@keyframes moveLeftRightAdvanced {
-  0% {
-    transform: translateX(0);
-    animation-timing-function: ease-in;   /* Ease-in when starting */
-  }
-  50% {
-    transform: translateX(200px);
-    animation-timing-function: ease-out;  /* Ease-out when returning */
-  }
-  100% {
-    transform: translateX(0);
-  }
-}
-    
+        @keyframes moveLeftRightAdvanced {
+            0% {
+                transform: translateX(0);
+                animation-timing-function: ease-in;
+            }
+            50% {
+                transform: translateX(200px);
+                animation-timing-function: ease-out;
+            }
+            100% {
+                transform: translateX(0);
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Header Section -->
         <div class="header">
-            <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1348.43 634.3">
+    <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1348.43 634.3">
               <defs>
                 <linearGradient id="linear-gradient" x1="555.43" y1="377.82" x2="1226.18" y2="377.82" gradientUnits="userSpaceOnUse">
                   <stop offset=".28" stop-color="#eaeff4"/>
@@ -446,288 +447,321 @@
                           <path d="M496.72,99.84c0-11.79,9.56-21.34,21.34-21.34h145.35c11.78,0,21.34,9.55,21.34,21.34,0,11.79-9.56,21.34-21.34,21.34h-145.35c-11.79,0-21.34-9.55-21.34-21.34Z" fill="#fff" stroke-width="0"/>
                           <path d="M532.62,176.66c0-11.79,9.56-21.34,21.34-21.34h109.45c11.78,0,21.34,9.55,21.34,21.34,0,11.79-9.56,21.34-21.34,21.34h-109.45c-11.78,0-21.34-9.55-21.34-21.34Z" fill="#fff" stroke-width="0"/>
                       </g>
-                  </svg>
-                  اختيار ملفات
-              </label>
-          </div>
-          <div id="results-container"></div>
-      </div>
-      <div class="footer">
-          <a href="https://www.behance.net/yosfgfx" target="_blank">تصميم يوسف حُميد (Yosfgfx)</a>
-      </div>
-      <div id="progress-overlay" class="overlay">
-          <div class="overlay-content">
-              <div id="progress-text">جاري التحليل...</div>
-              <div id="progress-bar">
-                  <div id="progress"></div>
-              </div>
-              <button id="cancel-button" onclick="cancelOperation()">إلغاء</button>
-          </div>
-      </div>
-      <div id="toast" class="toast">تم النسخ إلى الحافظة</div>
-      <!-- Include Tesseract.js -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js"></script>
+                  </svg>            <h1>قارئ الصور</h1>
+            <p class="subtitle">
+                تقوم هذه الأداة باستخراج المحتوى النصي من الصور يمكنك لصق صورة من الحافظة cmd+v على ماك، أو ويندوز ctrl+v كما يمكنك رفع صورة أو مجموعة صور لتحليلها أو اسحب وأفلت الصور بالماوس
+            </p>
+        </div>
 
+        <!-- Drop Area -->
+        <div id="drop-area">
+            <p>قم بسحب وإفلات الصور هنا أو انقر لتحديد مكان الصورة من جهازك</p>
+            <input type="file" id="fileElem" accept="image/*" multiple>
+            <label class="button" for="fileElem">
+                <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 684.75 514.53" width="24" height="24">
+                    <!-- SVG content omitted for brevity -->
+                    <circle cx="269.46" cy="185.92" r="68.33" fill="#c4dbf7" stroke-width="0"/>
+                    <path d="M179.78,185.91c0-49.45,40.23-89.67,89.67-89.67,49.45,0,89.67,40.23,89.67,89.67,0,49.45-40.23,89.67-89.67,89.67-49.45,0-89.68-40.23-89.67-89.67ZM222.46,185.91c0,25.91,21.08,47,47,47,25.91,0,47-21.08,47-47,0-25.91-21.08-47-47-47-25.92,0-47,21.08-47,47Z" fill="#fff" stroke-width="0"/>
+                    <polygon points="631.48 492.41 426.19 221.08 258.68 492.41 631.48 492.41" fill="#c4dbf7" opacity=".55" stroke-width="0"/>
+                    <path d="M240.04,502.8c-3.77-6.76-3.58-15.02.48-21.61l167.51-271.33c3.7-5.99,10.11-9.77,17.15-10.1,7.01-.33,13.78,2.82,18.03,8.44l205.3,271.33c4.89,6.46,5.69,15.13,2.09,22.38-3.61,7.25-11.01,11.84-19.11,11.84h-372.8c-7.74,0-14.87-4.19-18.64-10.95ZM427.97,258.81l-131.04,212.26h291.64s-160.6-212.26-160.6-212.26Z" fill="#fff" opacity=".68" stroke-width="0"/>
+                    <polygon points="388.29 492.41 220.78 306.7 53.27 492.41 388.29 492.41" fill="#c4dbf7" stroke-width="0"/>
+                    <g>
+                        <path d="M33.77,501.07c-3.42-7.7-1.99-16.7,3.65-22.96l167.51-185.7c4.05-4.49,9.81-7.05,15.85-7.05,6.04,0,11.8,2.56,15.85,7.05l167.51,185.7c5.65,6.26,7.08,15.26,3.65,22.96-3.43,7.7-11.07,12.67-19.5,12.67H53.27c-8.43,0-16.07-4.96-19.5-12.67ZM220.78,338.56l-119.52,132.5h239.04s-119.52-132.5-119.52-132.5Z" fill="#fff" stroke-width="0"/>
+                        <path d="M33.15,493.19c0-11.79,9.56-21.34,21.34-21.34h575.76c6.52,0,11.81-5.3,11.81-11.82V54.5c0-6.51-5.3-11.82-11.81-11.82H54.5c-6.52,0-11.81,5.3-11.81,11.82v302.25c0,11.79-9.56,21.34-21.34,21.34-11.78,0-21.34-9.55-21.34-21.34V54.5C0,24.45,24.45,0,54.49,0h575.76c30.05,0,54.49,24.45,54.49,54.5v405.53c0,30.05-24.45,54.5-54.49,54.5H54.49c-11.78,0-21.34-9.55-21.34-21.34Z" fill="#fff" stroke-width="0"/>
+                    </g>
+                    <g opacity=".86">
+                        <path d="M496.72,99.84c0-11.79,9.56-21.34,21.34-21.34h145.35c11.78,0,21.34,9.55,21.34,21.34,0,11.79-9.56,21.34-21.34,21.34h-145.35c-11.79,0-21.34-9.55-21.34-21.34Z" fill="#fff" stroke-width="0"/>
+                        <path d="M532.62,176.66c0-11.79,9.56-21.34,21.34-21.34h109.45c11.78,0,21.34,9.55,21.34,21.34,0,11.79-9.56,21.34-21.34,21.34h-109.45c-11.78,0-21.34-9.55-21.34-21.34Z" fill="#fff" stroke-width="0"/>
+                    </g>
+                </svg>
+                اختيار ملفات
+            </label>
+        </div>
+
+        <!-- Results Container -->
+        <div id="results-container"></div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <a href="https://www.behance.net/yosfgfx" target="_blank">تصميم يوسف حُميد (Yosfgfx)</a>
+    </div>
+
+    <!-- Progress Overlay -->
+    <div id="progress-overlay" class="overlay">
+        <div class="overlay-content">
+            <div id="progress-text">جاري التحليل...</div>
+            <div id="progress-bar">
+                <div id="progress"></div>
+            </div>
+            <button id="cancel-button" onclick="cancelOperation()">إلغاء</button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">تم النسخ إلى الحافظة</div>
+
+    <!-- JavaScript -->
     <script>
         // Initialize global variables
-const dropArea = document.getElementById('drop-area');
-const fileElem = document.getElementById('fileElem');
-const resultsContainer = document.getElementById('results-container');
-const progressOverlay = document.getElementById('progress-overlay');
-const progressBar = document.getElementById('progress');
-const toast = document.getElementById('toast');
-let worker = null;
+        const dropArea = document.getElementById('drop-area');
+        const fileElem = document.getElementById('fileElem');
+        const resultsContainer = document.getElementById('results-container');
+        const progressOverlay = document.getElementById('progress-overlay');
+        const progressBar = document.getElementById('progress');
+        const toast = document.getElementById('toast');
+        let worker = null;
 
-// Prevent default behaviors for drag-and-drop
-['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    dropArea.addEventListener(eventName, preventDefaults, false);
-    document.body.addEventListener(eventName, preventDefaults, false);
-});
+        // Prevent default behaviors for drag-and-drop and paste
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
 
-// Highlight drop area on drag events
-['dragenter', 'dragover'].forEach(eventName => {
-    dropArea.addEventListener(eventName, highlight, false);
-});
+        // Highlight drop area on drag events
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
 
-['dragleave', 'drop'].forEach(eventName => {
-    dropArea.addEventListener(eventName, unhighlight, false);
-});
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
 
-// Handle paste events
-document.addEventListener('paste', handlePaste, false);
+        // Handle paste events
+        document.addEventListener('paste', handlePaste, false);
 
-// Handle file drop
-dropArea.addEventListener('drop', handleDrop, false);
-fileElem.addEventListener('change', handleFiles, false);
+        // Handle file drop
+        dropArea.addEventListener('drop', handleDrop, false);
+        fileElem.addEventListener('change', handleFiles, false);
 
-// Prevent default behavior
-function preventDefaults(e) {
-    e.preventDefault();
-    e.stopPropagation();
-}
-
-// Highlight drop area
-function highlight(e) {
-    dropArea.classList.add('highlight');
-}
-
-// Unhighlight drop area
-function unhighlight(e) {
-    dropArea.classList.remove('highlight');
-}
-
-// Handle dropped files
-function handleDrop(e) {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    handleFiles({ target: { files: files } });
-}
-
-// Handle selected files
-function handleFiles(e) {
-    const files = e.target.files;
-    if (files.length > 0) {
-        processFiles(files);
-    }
-}
-
-// Handle pasted images
-function handlePaste(e) {
-    const items = e.clipboardData.items;
-    for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf('image') !== -1) {
-            const blob = items[i].getAsFile();
-            showProgressOverlay(); // Show progress before processing
-            processImage(blob).then(() => {
-                hideProgressOverlay(); // Hide progress after processing
-            }).catch((error) => {
-                console.error('Error processing pasted image:', error);
-                alert('حدث خطأ أثناء معالجة الصورة. يرجى المحاولة مرة أخرى.');
-                hideProgressOverlay(); // Hide progress on error
-            });
-            break; // Process only one image at a time
-        }
-    }
-}
-
-// Process multiple files
-async function processFiles(files) {
-    showProgressOverlay();
-    for (let file of files) {
-        if (file.type.startsWith('image/')) {
-            await processImage(file);
-        }
-    }
-    hideProgressOverlay();
-}
-
-// Process a single image file
-async function processImage(file) {
-    try {
-        // If a worker is already running, terminate it
-        if (worker) {
-            await worker.terminate();
-            worker = null;
+        // Prevent default behavior
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
         }
 
-        // Create a new worker
-        worker = Tesseract.createWorker({
-            logger: m => {
-                if (m.status === 'recognizing text') {
-                    updateProgress(m.progress);
+        // Highlight drop area
+        function highlight(e) {
+            dropArea.classList.add('highlight');
+        }
+
+        // Unhighlight drop area
+        function unhighlight(e) {
+            dropArea.classList.remove('highlight');
+        }
+
+        // Handle dropped files
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles({ target: { files: files } });
+        }
+
+        // Handle selected files
+        function handleFiles(e) {
+            const files = e.target.files;
+            if (files.length > 0) {
+                processFiles(files);
+            }
+        }
+
+        // Handle pasted images
+        function handlePaste(e) {
+            const items = e.clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const blob = items[i].getAsFile();
+                    showProgressOverlay(); // Show progress before processing
+                    processImage(blob).then(() => {
+                        hideProgressOverlay(); // Hide progress after processing
+                    }).catch((error) => {
+                        console.error('Error processing pasted image:', error);
+                        alert('حدث خطأ أثناء معالجة الصورة. يرجى المحاولة مرة أخرى.');
+                        hideProgressOverlay(); // Hide progress on error
+                    });
+                    break; // Process only one image at a time
                 }
             }
-        });
-
-        // Initialize the worker
-        await worker.load(); // Load the WASM and language data
-        await worker.loadLanguage('ara'); // Load Arabic language
-        await worker.initialize('ara'); // Initialize with Arabic
-
-        // Recognize text from the image
-        const { data: { text } } = await worker.recognize(file);
-
-        // Display the result
-        displayResult(file.name || 'Pasted Image', text);
-    } catch (error) {
-        console.error('Error processing image:', error);
-        alert('حدث خطأ أثناء معالجة الصورة. يرجى المحاولة مرة أخرى.');
-    } finally {
-        // Terminate the worker
-        if (worker) {
-            await worker.terminate();
-            worker = null;
         }
-        hideProgressOverlay();
-    }
-}
 
-// Display OCR result
-function displayResult(fileName, text) {
-    const resultWindow = document.createElement('div');
-    resultWindow.className = 'result-window';
-    resultWindow.innerHTML = `
-        <div class="result-window-header">
-            <span>${fileName}</span>
-            <div>
-                <button class="close-button" onclick="toggleResultWindow(this)">▼</button>
-                <button class="close-button" onclick="closeResultWindow(this)">×</button>
-            </div>
-        </div>
-        <div class="result-window-content">
-            <div>${text}</div>
-            <div class="result-window-buttons">
-                <button class="result-window-button" onclick="saveAsTxt('${fileName}', this)">حفظ كملف نصي</button>
-                <button class="result-window-button" onclick="copyToClipboard(this)">نسخ إلى الحافظة</button>
-            </div>
-        </div>
-    `;
-    resultsContainer.insertBefore(resultWindow, resultsContainer.firstChild);
-}
-
-// Toggle result window visibility
-function toggleResultWindow(button) {
-    const content = button.closest('.result-window').querySelector('.result-window-content');
-    content.classList.toggle('collapsed');
-    button.textContent = content.classList.contains('collapsed') ? '▼' : '▲';
-}
-
-// Close result window
-function closeResultWindow(button) {
-    button.closest('.result-window').remove();
-}
-
-// Save OCR result as text file
-function saveAsTxt(fileName, button) {
-    const text = button.closest('.result-window-content').querySelector('div').innerText;
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = fileName.replace(/\.[^/.]+$/, "") + '.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-}
-
-// Copy OCR result to clipboard
-function copyToClipboard(button) {
-    const text = button.closest('.result-window-content').querySelector('div').innerText;
-    navigator.clipboard.writeText(text).then(() => {
-        showToast('تم نسخ النص إلى الحافظة!');
-    }).catch(err => {
-        console.error('Failed to copy text: ', err);
-        showToast('فشل في نسخ النص.');
-    });
-}
-
-// Show progress overlay
-function showProgressOverlay() {
-    progressOverlay.style.display = 'flex';
-    progressBar.style.width = '0%';
-    document.getElementById('progress-text').textContent = 'جاري التحليل...';
-    progressOverlay.querySelector('.overlay-content').style.animation = 'slideUp 0.3s ease-out';
-}
-
-// Hide progress overlay
-function hideProgressOverlay() {
-    const overlayContent = progressOverlay.querySelector('.overlay-content');
-    overlayContent.style.animation = 'slideDown 0.3s ease-out';
-    setTimeout(() => {
-        progressOverlay.style.display = 'none';
-        overlayContent.style.animation = '';
-    }, 300);
-}
-
-// Update progress bar
-function updateProgress(progress) {
-    progressBar.style.width = `${progress * 100}%`;
-    document.getElementById('progress-text').textContent = `جاري التحليل... ${Math.round(progress * 100)}%`;
-}
-
-// Show toast notification with custom message
-function showToast(message = 'تم النسخ إلى الحافظة!') {
-    toast.textContent = message; // Set the message
-    toast.classList.add('show');
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 3000);
-}
-
-// Cancel OCR Operation
-async function cancelOperation() {
-    if (worker) {
-        try {
-            await worker.terminate(); // Terminate the worker
-            worker = null; // Reset the worker reference
-            console.log('OCR operation canceled.');
-            showToast('تم إلغاء عملية التحليل.');
-        } catch (error) {
-            console.error('Error terminating worker:', error);
-            showToast('حدث خطأ أثناء إلغاء العملية.');
+        // Process multiple files
+        async function processFiles(files) {
+            showProgressOverlay();
+            for (let file of files) {
+                if (file.type.startsWith('image/')) {
+                    await processImage(file);
+                }
+            }
+            hideProgressOverlay();
         }
-    } else {
-        console.log('No active OCR operation to cancel.');
-        showToast('لا توجد عملية تحليل نشطة للإلغاء.');
-    }
-    
-    // Hide the progress overlay
-    hideProgressOverlay();
-}
 
-// Animate gradients (if applicable)
-function animateGradients() {
-    const gradients = document.querySelectorAll('linearGradient');
-    gradients.forEach(gradient => {
-        const stops = gradient.querySelectorAll('stop');
-        stops.forEach(stop => {
-            const randomDuration = 5 + Math.random() * 5; // Random duration between 5 and 10 seconds
-            stop.style.animation = `gradientAnimation ${randomDuration}s infinite alternate`;
-        });
-    });
-}
+        // Process a single image file
+        async function processImage(file) {
+            try {
+                // If a worker is already running, terminate it
+                if (worker) {
+                    await worker.terminate();
+                    worker = null;
+                }
 
-// Call animateGradients on page load
-window.addEventListener('load', animateGradients);
+                // Create a new worker
+                worker = Tesseract.createWorker({
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            updateProgress(m.progress);
+                        }
+                    }
+                });
+
+                // Initialize the worker
+                await worker.load(); // Load the WASM and language data
+                await worker.loadLanguage('ara'); // Load Arabic language
+                await worker.initialize('ara'); // Initialize with Arabic
+
+                // Recognize text from the image
+                const { data: { text } } = await worker.recognize(file);
+
+                // Display the result
+                displayResult(file.name || 'Pasted Image', text);
+            } catch (error) {
+                console.error('Error processing image:', error);
+                alert('حدث خطأ أثناء معالجة الصورة. يرجى المحاولة مرة أخرى.');
+            } finally {
+                // Terminate the worker
+                if (worker) {
+                    await worker.terminate();
+                    worker = null;
+                }
+                hideProgressOverlay();
+            }
+        }
+
+        // Display OCR result
+        function displayResult(fileName, text) {
+            const resultWindow = document.createElement('div');
+            resultWindow.className = 'result-window';
+            resultWindow.innerHTML = `
+                <div class="result-window-header">
+                    <span>${fileName}</span>
+                    <div>
+                        <button class="close-button" onclick="toggleResultWindow(this)">▼</button>
+                        <button class="close-button" onclick="closeResultWindow(this)">×</button>
+                    </div>
+                </div>
+                <div class="result-window-content">
+                    <div>${text}</div>
+                    <div class="result-window-buttons">
+                        <button class="result-window-button" onclick="saveAsTxt('${fileName}', this)">حفظ كملف نصي</button>
+                        <button class="result-window-button" onclick="copyToClipboard(this)">نسخ إلى الحافظة</button>
+                    </div>
+                </div>
+            `;
+            resultsContainer.insertBefore(resultWindow, resultsContainer.firstChild);
+        }
+
+        // Toggle result window visibility
+        function toggleResultWindow(button) {
+            const content = button.closest('.result-window').querySelector('.result-window-content');
+            content.classList.toggle('collapsed');
+            button.textContent = content.classList.contains('collapsed') ? '▼' : '▲';
+        }
+
+        // Close result window
+        function closeResultWindow(button) {
+            button.closest('.result-window').remove();
+        }
+
+        // Save OCR result as text file
+        function saveAsTxt(fileName, button) {
+            const text = button.closest('.result-window-content').querySelector('div').innerText;
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = fileName.replace(/\.[^/.]+$/, "") + '.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // Copy OCR result to clipboard
+        function copyToClipboard(button) {
+            const text = button.closest('.result-window-content').querySelector('div').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('تم نسخ النص إلى الحافظة!');
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                showToast('فشل في نسخ النص.');
+            });
+        }
+
+        // Show progress overlay
+        function showProgressOverlay() {
+            progressOverlay.style.display = 'flex';
+            progressBar.style.width = '0%';
+            document.getElementById('progress-text').textContent = 'جاري التحليل...';
+            progressOverlay.querySelector('.overlay-content').style.animation = 'slideUp 0.3s ease-out';
+        }
+
+        // Hide progress overlay
+        function hideProgressOverlay() {
+            const overlayContent = progressOverlay.querySelector('.overlay-content');
+            overlayContent.style.animation = 'slideDown 0.3s ease-out';
+            setTimeout(() => {
+                progressOverlay.style.display = 'none';
+                overlayContent.style.animation = '';
+            }, 300);
+        }
+
+        // Update progress bar
+        function updateProgress(progress) {
+            progressBar.style.width = `${progress * 100}%`;
+            document.getElementById('progress-text').textContent = `جاري التحليل... ${Math.round(progress * 100)}%`;
+        }
+
+        // Show toast notification with custom message
+        function showToast(message = 'تم النسخ إلى الحافظة!') {
+            toast.textContent = message; // Set the message
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Cancel OCR Operation
+        async function cancelOperation() {
+            if (worker) {
+                try {
+                    await worker.terminate(); // Terminate the worker
+                    worker = null; // Reset the worker reference
+                    console.log('OCR operation canceled.');
+                    showToast('تم إلغاء عملية التحليل.');
+                } catch (error) {
+                    console.error('Error terminating worker:', error);
+                    showToast('حدث خطأ أثناء إلغاء العملية.');
+                }
+            } else {
+                console.log('No active OCR operation to cancel.');
+                showToast('لا توجد عملية تحليل نشطة للإلغاء.');
+            }
+            
+            // Hide the progress overlay
+            hideProgressOverlay();
+        }
+
+        // Animate gradients (if applicable)
+        function animateGradients() {
+            const gradients = document.querySelectorAll('linearGradient');
+            gradients.forEach(gradient => {
+                const stops = gradient.querySelectorAll('stop');
+                stops.forEach(stop => {
+                    const randomDuration = 5 + Math.random() * 5; // مدة عشوائية بين 5 و 10 ثوانٍ
+                    stop.style.animation = `gradientAnimation ${randomDuration}s infinite alternate`;
+                });
+            });
+        }
+
+        // Call animateGradients on page load
+        window.addEventListener('load', animateGradients);
     </script>
 </body>
 </html>

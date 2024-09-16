@@ -349,6 +349,34 @@
         #linear-gradient-2 stop:last-child {
             animation: gradientAnimation 7s infinite alternate-reverse;
         }
+
+/*         Arrow animation */
+        /* styles.css */
+
+/* Style the L_arrow element */
+/* Advanced styles.css */
+
+#L_arrow {
+/*   display: inline-block; */
+  position: relative;
+/*   font-size: 24px; */
+  transform: translateX(0);
+  animation: moveLeftRightAdvanced 3s infinite;
+}
+
+@keyframes moveLeftRightAdvanced {
+  0% {
+    transform: translateX(0);
+    animation-timing-function: ease-in;   /* Ease-in when starting */
+  }
+  50% {
+    transform: translateX(200px);
+    animation-timing-function: ease-out;  /* Ease-out when returning */
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
     
     </style>
 </head>
@@ -393,7 +421,7 @@
                 <line x1="96.86" y1="319.56" x2="468.51" y2="319.56" fill="none" stroke="#6b63ff" stroke-linecap="round" stroke-linejoin="round" stroke-width="30"/>
                 <line x1="96.86" y1="214" x2="210.19" y2="214" fill="none" stroke="#6b63ff" stroke-linecap="round" stroke-linejoin="round" stroke-width="30"/>
                 <line x1="96.86" y1="530.67" x2="387.48" y2="530.67" fill="none" stroke="#6b63ff" stroke-linecap="round" stroke-linejoin="round" stroke-width="30"/>
-                <path d="M440.91,320.73h400M607.57,154.06l-166.67,166.67M607.57,487.4l-166.67-166.67" fill="none" stroke="#e07b6c" stroke-linecap="round" stroke-linejoin="round" stroke-width="40"/>
+                <path d="M440.91,320.73h400M607.57,154.06l-166.67,166.67M607.57,487.4l-166.67-166.67" id="L_arrow" fill="none" stroke="#e07b6c" stroke-linecap="round" stroke-linejoin="round" stroke-width="40"/>
               </svg>
               <h1>قارئ الصور</h1>
               <p class="subtitle">تقوم هذه الأداة باستخراج المحتوى النصي من الصور يمكنك لصق صورة من الحافظة cmd+v على ماك  , أو ويندوز ctrl+v كما يمكنك رفع صورة أو مجموعة صور لتحليلها أو اسحب وأفلت الصور بالماوس</p>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>قارئ الصور</title>
+    <title>قارئ الصور ورموز QR</title>
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
@@ -13,10 +13,12 @@
     <meta name="theme-color" content="#ffffff">
     
     <script src="tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     
     <style>
         @font-face {
-            font-family: 'IBM Plex Sans Arabic';
+    font-family: 'IBM Plex Sans Arabic';
             src: url('IBMPlexSansArabic-Regular.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
@@ -107,6 +109,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
         }
 
         .button:hover {
@@ -138,6 +141,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
         }
 
         .result-window-content {
@@ -145,6 +149,7 @@
             max-height: 300px;
             overflow-y: auto;
             transition: max-height 0.3s ease;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
         }
 
         .result-window-content.collapsed {
@@ -168,6 +173,7 @@
             border-radius: var(--border-radius);
             cursor: pointer;
             font-size: 14px;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
         }
 
         .overlay {
@@ -181,6 +187,11 @@
             background-size: 400% 400%;
             animation: gradientShift 15s ease infinite;
             z-index: 1000;
+            /* Fallback for browsers that don't support backdrop-filter */
+            background-color: rgba(14, 13, 32, 0.85);
+            -webkit-backdrop-filter: blur(15px);
+            -moz-backdrop-filter: blur(15px);
+            -ms-backdrop-filter: blur(15px);
             backdrop-filter: blur(15px);
             justify-content: center;
             align-items: center;
@@ -226,8 +237,10 @@
             background-size: 300% 100%;
             animation: textGradientShift 3s linear infinite;
             -webkit-background-clip: text;
+            -moz-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
+            -moz-text-fill-color: transparent;
             font-family: 'IBM Plex Sans Arabic', sans-serif;
             font-weight: bold;
         }
@@ -247,7 +260,7 @@
             margin-bottom: 15px;
         }
 
-        #progress {
+    #progress {
             width: 0%;
             height: 100%;
             background-color: var(--primary-color);
@@ -263,6 +276,7 @@
             cursor: pointer;
             font-size: 14px;
             transition: all 0.3s ease;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
         }
 
         #cancel-button:hover {
@@ -297,6 +311,7 @@
             opacity: 0;
             transition: opacity 0.3s, transform 0.3s;
             z-index: 2000;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
         }
 
         .toast.show {
@@ -323,6 +338,7 @@
             cursor: pointer;
             padding: 0;
             margin-left: 10px;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
         }
         @keyframes gradientAnimation {
             0% {
@@ -379,7 +395,276 @@
     transform: translateX(0);
   }
 }
-    
+
+        /* أنماط لعناصر QR */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: white;
+            color: var(--text-color);
+            border: none;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            font-size: 16px;
+        }
+
+        .tab.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        #qr-generator {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #qr-text {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            margin-bottom: 15px;
+        font-family: 'IBM Plex Sans Arabic', sans-serif;
+            box-sizing: border-box;
+        }
+
+        #qr-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .qr-option {
+            display: flex;
+            align-items: center;
+        }
+
+        .qr-option label {
+            margin-right: 10px;
+        }
+
+        #qr-color {
+            border: none;
+            height: 30px;
+            width: 30px;
+            padding: 0;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        #qr-size {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        #qr-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        #qr-download {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        #qr-download:hover {
+            background-color: #45a049;
+        }
+
+        .qr-result {
+            text-align: center;
+        }
+
+        /* أنماط إضافية لعناصر QR */
+        #drop-area-qr {
+            border: 2px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.436), rgb(255, 255, 255), rgba(235, 246, 255, 0.349));
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        #drop-area-qr.highlight {
+            background-color: rgba(108, 99, 255, 0.1);
+        }
+
+        #qrFileElem {
+            display: none;
+        }
+
+        .paste-hint {
+            font-size: 14px;
+            color: var(--secondary-color);
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        .paste-hint kbd {
+            background-color: #f7f7f7;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+            color: #333;
+            display: inline-block;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            font-size: 12px;
+            line-height: 1;
+            padding: 3px 5px;
+            margin: 0 2px;
+        }
+
+        .paste-button {
+            margin-right: 10px;
+        }
+
+        .qr-generator-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* أنماط جديدة للعناصر المضافة */
+        .qr-size-option {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        #qr-size-slider {
+            flex: 1;
+            margin: 0 10px;
+            height: 5px;
+            background: #ddd;
+            outline: none;
+            border-radius: 5px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        #qr-size-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+        }
+
+        #qr-size-slider::-moz-range-thumb {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            border: none;
+        }
+
+        #qr-size {
+            width: 60px;
+            text-align: center;
+        }
+
+        #qr-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        #qr-actions.hidden {
+            display: none;
+        }
+
+        .qr-action-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 14px;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .qr-action-button:hover {
+            background-color: #5A52CC;
+            transform: translateY(-2px);
+        }
+
+        .qr-action-button svg {
+            margin-left: 8px;
+        }
+
+        #qr-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            min-height: 200px;
+        }
+
+        textarea, input, select, button {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+        }
+
+        /* تحسين التوافق مع المتصفحات المختلفة */
+        @supports not (backdrop-filter: blur(15px)) {
+            .overlay {
+                background-color: rgba(14, 13, 32, 0.9);
+            }
+        }
+
+        /* تحسين التوافق مع المتصفحات التي لا تدعم background-clip: text */
+        @supports not (background-clip: text) {
+            #progress-text {
+                color: #63f7ff;
+                background: none;
+                -webkit-text-fill-color: initial;
+                -moz-text-fill-color: initial;
+            }
+        }
     </style>
 </head>
 <body>
@@ -425,35 +710,118 @@
                 <line x1="96.86" y1="530.67" x2="387.48" y2="530.67" fill="none" stroke="#6b63ff" stroke-linecap="round" stroke-linejoin="round" stroke-width="30"/>
                 <path d="M440.91,320.73h400M607.57,154.06l-166.67,166.67M607.57,487.4l-166.67-166.67" id="L_arrow" fill="none" stroke="#e07b6c" stroke-linecap="round" stroke-linejoin="round" stroke-width="40"/>
               </svg>
-              <h1>قارئ الصور</h1>
-              <p class="subtitle">تقوم هذه الأداة باستخراج المحتوى النصي من الصور يمكنك لصق صورة من الحافظة cmd+v على ماك  , أو ويندوز ctrl+v كما يمكنك رفع صورة أو مجموعة صور لتحليلها أو اسحب وأفلت الصور بالماوس</p>
+              <h1>قارئ الصور ورموز QR</h1>
+              <p class="subtitle">تقوم هذه الأداة باستخراج المحتوى النصي من الصور وقراءة وإنشاء رموز QR. يمكنك لصق صورة أو رمز QR من الحافظة (cmd+v على ماك، ctrl+v على ويندوز) أو رفع ملفات أو سحبها وإفلاتها.</p>
           </div>
-          <div id="drop-area">
-              <p>قم بسحب وإفلات الصور هنا أو انقر لتحديد مكان الصورة من جهازك</p>
-              <input type="file" id="fileElem" accept="image/*" multiple>
-              <label class="button" for="fileElem">
-                  <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 684.75 514.53" width="24" height="24">
-                      <circle cx="269.46" cy="185.92" r="68.33" fill="#c4dbf7" stroke-width="0"/>
-                      <path d="M179.78,185.91c0-49.45,40.23-89.67,89.67-89.67,49.45,0,89.67,40.23,89.67,89.67,0,49.45-40.23,89.67-89.67,89.67-49.45,0-89.68-40.23-89.67-89.67ZM222.46,185.91c0,25.91,21.08,47,47,47,25.91,0,47-21.08,47-47,0-25.91-21.08-47-47-47-25.92,0-47,21.08-47,47Z" fill="#fff" stroke-width="0"/>
-                      <polygon points="631.48 492.41 426.19 221.08 258.68 492.41 631.48 492.41" fill="#c4dbf7" opacity=".55" stroke-width="0"/>
-                      <path d="M240.04,502.8c-3.77-6.76-3.58-15.02.48-21.61l167.51-271.33c3.7-5.99,10.11-9.77,17.15-10.1,7.01-.33,13.78,2.82,18.03,8.44l205.3,271.33c4.89,6.46,5.69,15.13,2.09,22.38-3.61,7.25-11.01,11.84-19.11,11.84h-372.8c-7.74,0-14.87-4.19-18.64-10.95ZM427.97,258.81l-131.04,212.26h291.64s-160.6-212.26-160.6-212.26Z" fill="#fff" opacity=".68" stroke-width="0"/>
-                      <polygon points="388.29 492.41 220.78 306.7 53.27 492.41 388.29 492.41" fill="#c4dbf7" stroke-width="0"/>
-                      <g>
-                          <path d="M33.77,501.07c-3.42-7.7-1.99-16.7,3.65-22.96l167.51-185.7c4.05-4.49,9.81-7.05,15.85-7.05,6.04,0,11.8,2.56,15.85,7.05l167.51,185.7c5.65,6.26,7.08,15.26,3.65,22.96-3.43,7.7-11.07,12.67-19.5,12.67H53.27c-8.43,0-16.07-4.96-19.5-12.67ZM220.78,338.56l-119.52,132.5h239.04s-119.52-132.5-119.52-132.5Z" fill="#fff" stroke-width="0"/>
-                          <path d="M33.15,493.19c0-11.79,9.56-21.34,21.34-21.34h575.76c6.52,0,11.81-5.3,11.81-11.82V54.5c0-6.51-5.3-11.82-11.81-11.82H54.5c-6.52,0-11.81,5.3-11.81,11.82v302.25c0,11.79-9.56,21.34-21.34,21.34-11.78,0-21.34-9.55-21.34-21.34V54.5C0,24.45,24.45,0,54.49,0h575.76c30.05,0,54.49,24.45,54.49,54.5v405.53c0,30.05-24.45,54.5-54.49,54.5H54.49c-11.78,0-21.34-9.55-21.34-21.34Z" fill="#fff" stroke-width="0"/>
-                      </g>
-                      <g opacity=".86">
-                          <path d="M496.72,99.84c0-11.79,9.56-21.34,21.34-21.34h145.35c11.78,0,21.34,9.55,21.34,21.34,0,11.79-9.56,21.34-21.34,21.34h-145.35c-11.79,0-21.34-9.55-21.34-21.34Z" fill="#fff" stroke-width="0"/>
-                          <path d="M532.62,176.66c0-11.79,9.56-21.34,21.34-21.34h109.45c11.78,0,21.34,9.55,21.34,21.34,0,11.79-9.56,21.34-21.34,21.34h-109.45c-11.78,0-21.34-9.55-21.34-21.34Z" fill="#fff" stroke-width="0"/>
-                      </g>
-                  </svg>
-                  اختيار ملفات
-              </label>
+
+          <div class="tabs">
+              <button class="tab active" data-tab="ocr">قراءة النصوص من الصور</button>
+              <button class="tab" data-tab="qr-reader">قراءة رموز QR</button>
+              <button class="tab" data-tab="qr-generator">إنشاء رموز QR</button>
           </div>
-          <div id="results-container"></div>
+
+          <div id="ocr" class="tab-content active">
+              <div id="drop-area">
+                  <p>قم بسحب وإفلات الصور هنا أو انقر لتحديد مكان الصورة من جهازك</p>
+                  <input type="file" id="fileElem" accept="image/*" multiple>
+                  <label class="button" for="fileElem">
+                      <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 684.75 514.53" width="24" height="24">
+                          <circle cx="269.46" cy="185.92" r="68.33" fill="#c4dbf7" stroke-width="0"/>
+                          <path d="M179.78,185.91c0-49.45,40.23-89.67,89.67-89.67,49.45,0,89.67,40.23,89.67,89.67,0,49.45-40.23,89.67-89.67,89.67-49.45,0-89.68-40.23-89.67-89.67ZM222.46,185.91c0,25.91,21.08,47,47,47,25.91,0,47-21.08,47-47,0-25.91-21.08-47-47-47-25.92,0-47,21.08-47,47Z" fill="#fff" stroke-width="0"/>
+                          <polygon points="631.48 492.41 426.19 221.08 258.68 492.41 631.48 492.41" fill="#c4dbf7" opacity=".55" stroke-width="0"/>
+                          <path d="M240.04,502.8c-3.77-6.76-3.58-15.02.48-21.61l167.51-271.33c3.7-5.99,10.11-9.77,17.15-10.1,7.01-.33,13.78,2.82,18.03,8.44l205.3,271.33c4.89,6.46,5.69,15.13,2.09,22.38-3.61,7.25-11.01,11.84-19.11,11.84h-372.8c-7.74,0-14.87-4.19-18.64-10.95ZM427.97,258.81l-131.04,212.26h291.64s-160.6-212.26-160.6-212.26Z" fill="#fff" opacity=".68" stroke-width="0"/>
+                          <polygon points="388.29 492.41 220.78 306.7 53.27 492.41 388.29 492.41" fill="#c4dbf7" stroke-width="0"/>
+                          <g>
+                              <path d="M33.77,501.07c-3.42-7.7-1.99-16.7,3.65-22.96l167.51-185.7c4.05-4.49,9.81-7.05,15.85-7.05,6.04,0,11.8,2.56,15.85,7.05l167.51,185.7c5.65,6.26,7.08,15.26,3.65,22.96-3.43,7.7-11.07,12.67-19.5,12.67H53.27c-8.43,0-16.07-4.96-19.5-12.67ZM220.78,338.56l-119.52,132.5h239.04s-119.52-132.5-119.52-132.5Z" fill="#fff" stroke-width="0"/>
+                              <path d="M33.15,493.19c0-11.79,9.56-21.34,21.34-21.34h575.76c6.52,0,11.81-5.3,11.81-11.82V54.5c0-6.51-5.3-11.82-11.81-11.82H54.5c-6.52,0-11.81,5.3-11.81,11.82v302.25c0,11.79-9.56,21.34-21.34,21.34-11.78,0-21.34-9.55-21.34-21.34V54.5C0,24.45,24.45,0,54.49,0h575.76c30.05,0,54.49,24.45,54.49,54.5v405.53c0,30.05-24.45,54.5-54.49,54.5H54.49c-11.78,0-21.34-9.55-21.34-21.34Z" fill="#fff" stroke-width="0"/>
+                          </g>
+                          <g opacity=".86">
+                              <path d="M496.72,99.84c0-11.79,9.56-21.34,21.34-21.34h145.35c11.78,0,21.34,9.55,21.34,21.34,0,11.79-9.56,21.34-21.34,21.34h-145.35c-11.79,0-21.34-9.55-21.34-21.34Z" fill="#fff" stroke-width="0"/>
+                              <path d="M532.62,176.66c0-11.79,9.56-21.34,21.34-21.34h109.45c11.78,0,21.34,9.55,21.34,21.34,0,11.79-9.56,21.34-21.34,21.34h-109.45c-11.78,0-21.34-9.55-21.34-21.34Z" fill="#fff" stroke-width="0"/>
+                          </g>
+                      </svg>
+                      اختيار ملفات
+                  </label>
+              </div>
+              <div id="results-container"></div>
+          </div>
+          <div id="qr-reader" class="tab-content">
+              <div id="drop-area-qr">
+                  <p>قم بسحب وإفلات صورة تحتوي على رمز QR أو انقر لتحديد الصورة من جهازك</p>
+                  <p class="paste-hint">يمكنك أيضاً لصق صورة من الحافظة مباشرة باستخدام <kbd>Ctrl+V</kbd> (ويندوز) أو <kbd>⌘+V</kbd> (ماك)</p>
+                  <input type="file" id="qrFileElem" accept="image/*">
+                  <label class="button" for="qrFileElem">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                          <rect x="7" y="7" width="3" height="3"></rect>
+                          <rect x="14" y="7" width="3" height="3"></rect>
+                          <rect x="7" y="14" width="3" height="3"></rect>
+                          <rect x="14" y="14" width="3" height="3"></rect>
+                      </svg>
+                      اختيار ملف
+                  </label>
+                  <button class="button paste-button" id="paste-qr-button">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                      </svg>
+                      لصق من الحافظة
+                  </button>
+              </div>
+              <div id="qr-results-container"></div>
+          </div>
+          <div id="qr-generator" class="tab-content">
+              <div class="qr-generator-container">
+                  <textarea id="qr-text" placeholder="أدخل النص أو الرابط الذي تريد تحويله إلى رمز QR"></textarea>
+                  <div id="qr-options">
+                      <div class="qr-option">
+                          <label for="qr-color">لون الرمز:</label>
+                          <input type="color" id="qr-color" value="#000000">
+                      </div>
+                      <div class="qr-option qr-size-option">
+                          <label for="qr-size">الحجم:</label>
+                          <input type="range" id="qr-size-slider" min="100" max="500" value="200" step="10">
+                          <input type="number" id="qr-size" min="100" max="500" value="200">
+                      </div>
+                  </div>
+                  <div id="qr-container"></div>
+                  <div id="qr-actions" class="hidden">
+                      <button class="qr-action-button" id="save-png">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                              <polyline points="7 10 12 15 17 10"></polyline>
+                              <line x1="12" y1="15" x2="12" y2="3"></line>
+                          </svg>
+                          حفظ PNG
+                      </button>
+                      <button class="qr-action-button" id="copy-png">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                          </svg>
+                          نسخ PNG
+                      </button>
+                      <button class="qr-action-button" id="save-svg">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                              <polyline points="7 10 12 15 17 10"></polyline>
+                              <line x1="12" y1="15" x2="12" y2="3"></line>
+                          </svg>
+                          حفظ SVG
+                      </button>
+                      <button class="qr-action-button" id="copy-svg">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                          </svg>
+                          نسخ SVG
+                      </button>
+                  </div>
+              </div>
+          </div>
       </div>
       <div class="footer">
-          <a href="https://www.behance.net/yosfgfx" target="_blank">تصميم يوسف حُميد (Yosfgfx)</a>
+          <a href="https://www.behance.net/yosfgfx" target="_blank" rel="noopener">تصميم يوسف حُميد (Yosfgfx)</a>
       </div>
       <div id="progress-overlay" class="overlay">
           <div class="overlay-content">
@@ -466,6 +834,21 @@
       </div>
       <div id="toast" class="toast">تم النسخ إلى الحافظة</div>
       <script>
+        // كود التبديل بين علامات التبويب
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // إزالة الفئة النشطة من جميع علامات التبويب
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                // إضافة الفئة النشطة للعلامة المحددة
+                tab.classList.add('active');
+                
+                // إخفاء جميع محتويات التبويب
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                // إظهار المحتوى المرتبط بالعلامة المحددة
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
         async function processImage(file) {
             showProgressOverlay(); 
 
@@ -671,65 +1054,349 @@
         }
 
         document.addEventListener('paste', function(event) {
-    const items = event.clipboardData.items;
-    for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf('image') !== -1) {
-            const blob = items[i].getAsFile();
-            showProgressOverlay(); // إظهار نافذة التقدم قبل بدء المعالجة
-            processImage(blob).then(() => {
-                hideProgressOverlay(); // إخفاء نافذة التقدم بعد انتهاء المعالجة
-            }).catch((error) => {
-                console.error('Error processing pasted image:', error);
-                hideProgressOverlay(); // إخفاء نافذة التقدم في حالة حدوث خطأ
-            });
-            break; // معالجة صورة واحدة فقط في كل مرة
-        }
-    }
-});
+            const items = event.clipboardData.items;
+            const activeTab = document.querySelector('.tab.active').dataset.tab;
+            
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const blob = items[i].getAsFile();
+                    
+                    if (activeTab === 'ocr') {
+                        processImage(blob);
+                        showToast('تم لصق الصورة وبدء تحليل النص');
+                    } else if (activeTab === 'qr-reader') {
+                        processQRFile(blob);
+                        showToast('تم لصق الصورة وبدء قراءة رمز QR');
+                    }
+                    
+                    break;
+                }
+            }
+        });
 
-async function processImage(file) {
-    worker = Tesseract.createWorker({
-        logger: m => {
-            if (m.status === 'recognizing text') {
-                updateProgress(m.progress);
+        // كود قراءة رموز QR
+        let dropAreaQR = document.getElementById('drop-area-qr');
+        let qrFileElem = document.getElementById('qrFileElem');
+        let qrResultsContainer = document.getElementById('qr-results-container');
+        let pasteQrButton = document.getElementById('paste-qr-button');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropAreaQR.addEventListener(eventName, preventDefaults, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropAreaQR.addEventListener(eventName, () => {
+                dropAreaQR.classList.add('highlight');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropAreaQR.addEventListener(eventName, () => {
+                dropAreaQR.classList.remove('highlight');
+            }, false);
+        });
+
+        dropAreaQR.addEventListener('drop', handleQRDrop, false);
+        qrFileElem.addEventListener('change', handleQRFiles, false);
+        
+        // إضافة وظيفة زر اللصق من الحافظة
+        pasteQrButton.addEventListener('click', function() {
+            navigator.clipboard.read().then(clipboardItems => {
+                for (const clipboardItem of clipboardItems) {
+                    for (const type of clipboardItem.types) {
+                        if (type.startsWith('image/')) {
+                            clipboardItem.getType(type).then(blob => {
+                                processQRFile(blob);
+                                showToast('تم لصق الصورة وبدء قراءة رمز QR');
+                            });
+                            return;
+                        }
+                    }
+                }
+                showToast('لم يتم العثور على صورة في الحافظة');
+            }).catch(err => {
+                console.error('حدث خطأ أثناء قراءة الحافظة:', err);
+                showToast('حدث خطأ أثناء قراءة الحافظة. تأكد من السماح بالوصول إلى الحافظة.');
+            });
+        });
+
+        function handleQRDrop(e) {
+            let dt = e.dataTransfer;
+            let files = dt.files;
+            handleQRFiles({ target: { files: files } });
+        }
+
+        function handleQRFiles(e) {
+            let files = e.target.files;
+            if (files.length > 0) {
+                processQRFile(files[0]);
             }
         }
-    });
 
-    await worker.load();
-    await worker.loadLanguage('ara');
-    await worker.initialize('ara');
+        async function processQRFile(file) {
+            showProgressOverlay();
+            document.getElementById('progress-text').textContent = 'جاري قراءة رمز QR...';
+            
+            try {
+                const imageUrl = URL.createObjectURL(file);
+                const image = new Image();
+                
+                image.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = image.width;
+                    canvas.height = image.height;
+                    context.drawImage(image, 0, 0, image.width, image.height);
+                    
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    
+                    if (code) {
+                        displayQRResult(file.name || 'صورة ملصقة', code.data);
+                    } else {
+                        displayQRResult(file.name || 'صورة ملصقة', 'لم يتم العثور على رمز QR في هذه الصورة.');
+                    }
+                    
+                    hideProgressOverlay();
+                    URL.revokeObjectURL(imageUrl);
+                };
+                
+                image.onerror = function() {
+                    displayQRResult(file.name || 'صورة ملصقة', 'حدث خطأ أثناء تحميل الصورة.');
+                    hideProgressOverlay();
+                    URL.revokeObjectURL(imageUrl);
+                };
+                
+                image.src = imageUrl;
+            } catch (error) {
+                displayQRResult(file.name || 'صورة ملصقة', 'حدث خطأ أثناء معالجة الملف: ' + error.message);
+                hideProgressOverlay();
+            }
+        }
 
-    const { data: { text } } = await worker.recognize(file);
-    
-    displayResult(file.name || 'Pasted Image', text);
+        function displayQRResult(fileName, text) {
+            let resultWindow = document.createElement('div');
+            resultWindow.className = 'result-window';
+            resultWindow.innerHTML = `
+                <div class="result-window-header">
+                    <span>${fileName}</span>
+                    <div>
+                        <button class="close-button" onclick="toggleResultWindow(this)">▼</button>
+                        <button class="close-button" onclick="closeResultWindow(this)">×</button>
+                    </div>
+                </div>
+                <div class="result-window-content">
+                    <div>${text}</div>
+                    <div class="result-window-buttons">
+                        <button class="result-window-button" onclick="copyToClipboard(this)">نسخ إلى الحافظة</button>
+                    </div>
+                </div>
+            `;
+            qrResultsContainer.insertBefore(resultWindow, qrResultsContainer.firstChild);
+        }
 
-    await worker.terminate();
-    worker = null;
-}
+        function toggleResultWindow(button) {
+            let content = button.closest('.result-window').querySelector('.result-window-content');
+            content.classList.toggle('collapsed');
+            button.textContent = content.classList.contains('collapsed') ? '▼' : '▲';
+        }
 
-function updateProgress(progress) {
-    progressBar.style.width = `${progress * 100}%`;
-    document.getElementById('progress-text').textContent = `جاري التحليل... ${Math.round(progress * 100)}%`;
-}
+        function closeResultWindow(button) {
+            button.closest('.result-window').remove();
+        }
 
-function showProgressOverlay() {
-    progressOverlay.style.display = 'flex';
-    progressBar.style.width = '0%';
-    document.getElementById('progress-text').textContent = 'جاري التحليل...';
-    progressOverlay.querySelector('.overlay-content').style.animation = 'slideUp 0.3s ease-out';
-}
+        function copyToClipboard(button) {
+            let text = button.closest('.result-window-content').querySelector('div').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast();
+            });
+        }
 
-function hideProgressOverlay() {
-    let overlayContent = progressOverlay.querySelector('.overlay-content');
-    overlayContent.style.animation = 'slideDown 0.3s ease-out';
-    setTimeout(() => {
-        progressOverlay.style.display = 'none';
-        overlayContent.style.animation = '';
-    }, 300);
-}
-        // استدعاء الدالة عند تحميل الصفحة
-        window.addEventListener('load', animateGradients);
+        // كود إنشاء رموز QR
+        const qrText = document.getElementById('qr-text');
+        const qrColor = document.getElementById('qr-color');
+        const qrSize = document.getElementById('qr-size');
+        const qrSizeSlider = document.getElementById('qr-size-slider');
+        const qrContainer = document.getElementById('qr-container');
+        const qrActions = document.getElementById('qr-actions');
+        const savePngButton = document.getElementById('save-png');
+        const copyPngButton = document.getElementById('copy-png');
+        const saveSvgButton = document.getElementById('save-svg');
+        const copySvgButton = document.getElementById('copy-svg');
+        let qrCanvas = null;
+        let qrSvg = null;
+
+        // ربط شريط التمرير مع حقل الإدخال الرقمي
+        qrSizeSlider.addEventListener('input', function() {
+            qrSize.value = this.value;
+            if (qrText.value.trim()) {
+                generateQRCode();
+            }
+        });
+
+        qrSize.addEventListener('input', function() {
+            qrSizeSlider.value = this.value;
+            if (qrText.value.trim()) {
+                generateQRCode();
+            }
+        });
+
+        // إنشاء رمز QR بشكل لحظي عند كتابة النص
+        qrText.addEventListener('input', debounce(function() {
+            generateQRCode();
+        }, 300));
+
+        // إنشاء رمز QR عند تغيير اللون
+        qrColor.addEventListener('input', function() {
+            if (qrText.value.trim()) {
+                generateQRCode();
+            }
+        });
+
+        // دالة لتأخير تنفيذ الوظيفة (لتحسين الأداء)
+        function debounce(func, delay) {
+            let timeout;
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+
+        function generateQRCode() {
+            const text = qrText.value.trim();
+            if (!text) {
+                qrContainer.innerHTML = '';
+                qrActions.classList.add('hidden');
+                return;
+            }
+
+            const size = parseInt(qrSize.value);
+            const color = qrColor.value;
+
+            // إنشاء رمز QR بصيغة Canvas (PNG)
+            qrContainer.innerHTML = '';
+            qrCanvas = document.createElement('canvas');
+            qrContainer.appendChild(qrCanvas);
+
+            QRCode.toCanvas(qrCanvas, text, {
+                width: size,
+                margin: 1,
+                color: {
+                    dark: color,
+                    light: '#ffffff'
+                }
+            }, function(error) {
+                if (error) {
+                    console.error('حدث خطأ أثناء إنشاء رمز QR:', error);
+                    return;
+                }
+                
+                // إنشاء رمز QR بصيغة SVG (غير مرئي)
+                createQRSvg(text, size, color);
+                
+                // إظهار أزرار الحفظ والنسخ
+                qrActions.classList.remove('hidden');
+            });
+        }
+
+        function createQRSvg(text, size, color) {
+            // إنشاء عنصر SVG غير مرئي
+            const svgContainer = document.createElement('div');
+            svgContainer.style.display = 'none';
+            document.body.appendChild(svgContainer);
+
+            QRCode.toString(text, {
+                type: 'svg',
+                width: size,
+                margin: 1,
+                color: {
+                    dark: color,
+                    light: '#ffffff'
+                }
+            }, function(error, svgString) {
+                if (error) {
+                    console.error('حدث خطأ أثناء إنشاء رمز QR بصيغة SVG:', error);
+                    return;
+                }
+                
+                svgContainer.innerHTML = svgString;
+                qrSvg = svgContainer.querySelector('svg');
+                
+                // تعديل حجم SVG
+                qrSvg.setAttribute('width', size);
+                qrSvg.setAttribute('height', size);
+                
+                // إزالة العنصر المؤقت
+                document.body.removeChild(svgContainer);
+            });
+        }
+
+        // حفظ الرمز بصيغة PNG
+        savePngButton.addEventListener('click', function() {
+            if (!qrCanvas) return;
+            
+            const link = document.createElement('a');
+            link.download = 'qrcode.png';
+            link.href = qrCanvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast('تم حفظ الرمز بصيغة PNG');
+        });
+
+        // نسخ الرمز بصيغة PNG إلى الحافظة
+        copyPngButton.addEventListener('click', async function() {
+            if (!qrCanvas) return;
+            
+            try {
+                const blob = await new Promise(resolve => qrCanvas.toBlob(resolve));
+                await navigator.clipboard.write([
+                    new ClipboardItem({
+                        [blob.type]: blob
+                    })
+                ]);
+                showToast('تم نسخ الرمز بصيغة PNG إلى الحافظة');
+            } catch (error) {
+                console.error('حدث خطأ أثناء نسخ الصورة:', error);
+                showToast('حدث خطأ أثناء نسخ الصورة');
+            }
+        });
+
+        // حفظ الرمز بصيغة SVG
+        saveSvgButton.addEventListener('click', function() {
+            if (!qrSvg) return;
+            
+            const svgData = new XMLSerializer().serializeToString(qrSvg);
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const svgUrl = URL.createObjectURL(svgBlob);
+            
+            const link = document.createElement('a');
+            link.download = 'qrcode.svg';
+            link.href = svgUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(svgUrl);
+            
+            showToast('تم حفظ الرمز بصيغة SVG');
+        });
+
+        // نسخ الرمز بصيغة SVG إلى الحافظة
+        copySvgButton.addEventListener('click', async function() {
+            if (!qrSvg) return;
+            
+            try {
+                const svgData = new XMLSerializer().serializeToString(qrSvg);
+                await navigator.clipboard.writeText(svgData);
+                showToast('تم نسخ الرمز بصيغة SVG إلى الحافظة');
+            } catch (error) {
+                console.error('حدث خطأ أثناء نسخ الرمز بصيغة SVG:', error);
+                showToast('حدث خطأ أثناء نسخ الرمز');
+            }
+        });
     </script>
 </body>
 </html>
